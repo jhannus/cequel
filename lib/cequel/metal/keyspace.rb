@@ -32,7 +32,7 @@ module Cequel
       attr_reader :credentials
       # @return [Hash] SSL Configuration options
       attr_reader :ssl_config
-      # @return [Symbol] The client compression option
+      # @return [Symbol] The client compression setting
       attr_reader :client_compression
 
       #
