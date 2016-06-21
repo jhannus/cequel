@@ -659,9 +659,9 @@ module Cequel
       end
 
       # (see BulkWrites#delete_all)
-      def delete_all
+      def delete_all(options={})
         if partition_specified?
-          data_set.delete
+          data_set.delete options
         else
           super
         end

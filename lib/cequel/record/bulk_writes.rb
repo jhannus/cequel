@@ -26,10 +26,11 @@ module Cequel
       #
       # Delete all matched records without executing callbacks
       #
+      # @param options [Hash] options for delete
       # @return [void]
       #
-      def delete_all
-        each_data_set { |data_set| data_set.delete }
+      def delete_all(options={})
+        each_data_set { |data_set| data_set.delete(options) }
       end
 
       #
