@@ -193,10 +193,15 @@ module Cequel
       def execute_with_options(statement, bind_vars, options={})
         options[:consistency] ||= default_consistency
 
+
+
         retries = max_retries
         log('CQL', statement, *bind_vars) do
           begin
-            client.execute(sanitize(statement, bind_vars), options)
+            prepared_statement = prepared_statement_manager.prepared(statement)
+            puts statement
+            puts options.merge(arguments: bind_vars).inspect
+            client.execute(prepared_statement, options.merge(arguments: bind_vars))
           rescue Cassandra::Errors::NoHostsAvailable,
                  Ione::Io::ConnectionError => e
             clear_active_connections!
@@ -300,6 +305,10 @@ module Cequel
 
       def batch_manager
         synchronize { @batch_manager ||= BatchManager.new(self) }
+      end
+
+      def prepared_statement_manager
+        @prepared_statement_manager ||= PreparedStatementManager.new(self)
       end
 
       def write_target

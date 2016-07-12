@@ -38,11 +38,18 @@ module Cequel
         options.assert_valid_keys(:timestamp, :ttl, :consistency)
         return if empty?
         statement = Statement.new
+        timestamp = options.fetch(:timestamp, nil)
         consistency = options.fetch(:consistency, data_set.query_consistency)
         write_to_statement(statement, options)
         statement.append(*data_set.row_specifications_cql)
+
+        bind_vars = statement.bind_vars
+        if timestamp
+          bind_vars = bind_vars.unshift((options[:timestamp].to_f * 1_000_000).to_i)
+        end
+
         data_set.write_with_consistency(
-          statement.cql, statement.bind_vars, consistency)
+          statement.cql, bind_vars, consistency)
       end
 
       private
@@ -80,7 +87,7 @@ module Cequel
               when :timestamp then (value.to_f * 1_000_000).to_i
               else value
               end
-            "#{key.to_s.upcase} #{serialized_value}"
+            "#{key.to_s.upcase} ?"
           end.join(' AND ')
         end
       end
