@@ -192,16 +192,17 @@ module Cequel
 
       def execute_with_options(statement, bind_vars, options={})
         options[:consistency] ||= default_consistency
-
-
-
         retries = max_retries
         log('CQL', statement, *bind_vars) do
           begin
-            prepared_statement = prepared_statement_manager.prepared(statement)
-            puts statement
-            puts options.merge(arguments: bind_vars).inspect
-            client.execute(prepared_statement, options.merge(arguments: bind_vars))
+            if options.fetch(:prepared_statement, false)
+              puts "Preparing statement: #{statement}"
+              statement = prepared_statement_manager.prepared(statement)
+              options.delete(:prepared_statement)
+            end
+
+            puts "execute_with_options: " + options.merge(arguments: bind_vars).inspect
+            client.execute(statement, options.merge(arguments: bind_vars))
           rescue Cassandra::Errors::NoHostsAvailable,
                  Ione::Io::ConnectionError => e
             clear_active_connections!
@@ -211,8 +212,8 @@ module Cequel
             retry
           end
         end
-
       end
+
       #
       # Execute a CQL query in this keyspace with the given consistency
       #

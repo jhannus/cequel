@@ -84,7 +84,7 @@ module Cequel
 
         singleton_class.module_eval(<<-RUBY, __FILE__, __LINE__+1)
           def #{method_prefix}_#{method_suffix}(#{arg_names})
-            where(#{column_filter_expr})#{scope_operation}
+            where(#{column_filter_expr}).prepared#{scope_operation}
           end
         RUBY
       end

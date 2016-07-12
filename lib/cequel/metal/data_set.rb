@@ -50,6 +50,7 @@ module Cequel
       attr_reader :query_consistency
       attr_reader :query_page_size
       attr_reader :query_paging_state
+      attr_reader :prepared_statement
 
       def_delegator :keyspace, :write_with_consistency
 
@@ -579,6 +580,12 @@ module Cequel
         end
       end
 
+      def prepared(prepare=true)
+        clone.tap do |data_set|
+          data_set.prepared_statement = prepare
+        end
+      end
+
       def next_paging_state
         results.paging_state
       end
@@ -672,7 +679,7 @@ module Cequel
 
       protected
 
-      attr_writer :row_limit, :query_consistency, :query_page_size, :query_paging_state
+      attr_writer :row_limit, :query_consistency, :query_page_size, :query_paging_state, :prepared_statement
 
       private
 
@@ -684,7 +691,8 @@ module Cequel
         keyspace.execute_with_options(cql, bind_vars, {
           consistency: query_consistency,
           page_size: query_page_size,
-          paging_state: query_paging_state
+          paging_state: query_paging_state,
+          prepared_statement: prepared_statement
         })
       end
 

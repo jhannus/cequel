@@ -465,6 +465,16 @@ module Cequel
       end
 
       #
+      # Set the whether this record set should use a prepared statement.
+      #
+      # @param prepare [Boolean] true for prepared statemnt, false otherwise
+      # @return [RecordSet] record set tuned to prepare the statement
+      #
+      def prepared(prepare=true)
+        scoped(prepared_statement: prepare)
+      end
+
+      #
       # Set the page_size at which to read records into the record set.
       #
       # @param page_size [Integer] page_size for reads
@@ -692,10 +702,10 @@ module Cequel
       hattr_reader :attributes, :select_columns, :scoped_key_values,
                    :row_limit, :lower_bound, :upper_bound,
                    :scoped_indexed_column, :query_consistency,
-                   :query_page_size, :query_paging_state
+                   :query_page_size, :query_paging_state, :prepared_statement
       protected :select_columns, :scoped_key_values, :row_limit, :lower_bound,
                 :upper_bound, :scoped_indexed_column, :query_consistency,
-                :query_page_size, :query_paging_state
+                :query_page_size, :query_paging_state, :prepared_statement
       hattr_inquirer :attributes, :reversed
       protected :reversed?
 
