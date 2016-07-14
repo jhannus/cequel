@@ -11,15 +11,15 @@ module Cequel
       # @return [Array] bind variables for CQL string
       attr_reader :bind_vars
 
-      def initialize
-        @cql, @bind_vars = [], []
+      def initialize(cql=[], bind_vars=[])
+        @cql, @bind_vars = [cql], bind_vars
       end
 
       #
       # @return [String] CQL statement
       #
       def cql
-        @cql.join
+        @cql.join.rstrip
       end
 
       #
@@ -30,7 +30,7 @@ module Cequel
       # @return [void]
       #
       def prepend(cql, *bind_vars)
-        @cql.unshift(cql)
+        @cql = @cql.prepend(cql)
         @bind_vars.unshift(*bind_vars)
       end
 

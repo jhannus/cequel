@@ -21,10 +21,10 @@ module Cequel
       #
       def execute(options = {})
         statement = Statement.new
-        consistency = options.fetch(:consistency, data_set.query_consistency)
+        options = options.merge(consistency: data_set.query_consistency, prepared_statement: data_set.prepared_statement)
         write_to_statement(statement, options)
         data_set.write_with_consistency(
-          statement.cql, statement.bind_vars, consistency)
+          statement.cql, statement.bind_vars, data_set.query_consistency)
       end
 
       #

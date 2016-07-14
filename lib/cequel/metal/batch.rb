@@ -40,9 +40,8 @@ module Cequel
       # @param (see Keyspace#execute)
       #
       def execute(cql, *bind_vars)
-        @statement.append("#{cql}\n", *bind_vars)
-        @statement_count += 1
-        if @auto_apply && @statement_count >= @auto_apply
+        @statements << Statement.new(cql, bind_vars)
+        if @auto_apply && @statements.size >= @auto_apply
           apply
           reset
         end
@@ -52,13 +51,21 @@ module Cequel
       # Send the batch to Cassandra
       #
       def apply
-        return if @statement_count.zero?
-        if @statement_count > 1
-          @statement.prepend(begin_statement)
-          @statement.append("APPLY BATCH\n")
+        return if @statements.size.zero?
+
+        if @statements.size > 1
+          batch = @keyspace.client.batch
+          @statements.each do |s|
+            stmt = @keyspace.prepared_statement(s.cql)
+            batch.add(stmt, s.bind_vars)
+          end
+          @keyspace.client.execute(batch, consistency: @consistency)
+        else
+          query = @statements.first
+          @keyspace.execute_with_consistency(
+            query.cql, query.bind_vars, @consistency)
         end
-        @keyspace.execute_with_consistency(
-          @statement.args.first, @statement.args.drop(1), @consistency)
+
         execute_on_complete_hooks
       end
 
@@ -99,13 +106,8 @@ module Cequel
       attr_reader :on_complete_hooks
 
       def reset
-        @statement = Statement.new
-        @statement_count = 0
+        @statements = []
         @on_complete_hooks = []
-      end
-
-      def begin_statement
-        "BEGIN #{"UNLOGGED " if unlogged?}BATCH\n"
       end
 
       def execute_on_complete_hooks

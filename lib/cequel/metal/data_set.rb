@@ -84,7 +84,7 @@ module Cequel
       #   CQL documentation for INSERT
       #
       def insert(data, options = {})
-        inserter { insert(data) }.execute(options)
+        inserter { insert(data) }.execute(options.merge(prepared_statement: prepared_statement))
       end
 
       #

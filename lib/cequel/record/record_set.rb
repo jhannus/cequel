@@ -467,7 +467,7 @@ module Cequel
       #
       # Set the whether this record set should use a prepared statement.
       #
-      # @param prepare [Boolean] true for prepared statemnt, false otherwise
+      # @param prepare [Boolean] true for prepared statement, false otherwise
       # @return [RecordSet] record set tuned to prepare the statement
       #
       def prepared(prepare=true)
