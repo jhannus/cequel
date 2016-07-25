@@ -62,8 +62,8 @@ module Cequel
           @keyspace.client.execute(batch, consistency: @consistency)
         else
           query = @statements.first
-          @keyspace.execute_with_consistency(
-            query.cql, query.bind_vars, @consistency)
+          @keyspace.execute_with_options(
+            query.cql, query.bind_vars, consistency: @consistency, prepapred: true)
         end
 
         execute_on_complete_hooks

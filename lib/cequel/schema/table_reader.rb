@@ -160,7 +160,7 @@ module Cequel
 
       def table_data
         return @table_data if defined? @table_data
-        table_query = keyspace.execute(<<-CQL, keyspace.name, table_name)
+        table_query = keyspace.execute(<<-CQL, keyspace.name, table_name.to_s)
               SELECT * FROM system.schema_columnfamilies
               WHERE keyspace_name = ? AND columnfamily_name = ?
         CQL
@@ -170,7 +170,7 @@ module Cequel
       def all_columns
         @all_columns ||=
           if table_data
-            column_query = keyspace.execute(<<-CQL, keyspace.name, table_name)
+            column_query = keyspace.execute(<<-CQL, keyspace.name, table_name.to_s)
               SELECT * FROM system.schema_columns
               WHERE keyspace_name = ? AND columnfamily_name = ?
             CQL

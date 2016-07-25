@@ -197,7 +197,9 @@ module Cequel
 
         log('CQL', statement, *bind_vars) do
           begin
+            #puts "#{"prepared: " if prepare_statement}#{statement}\n\tbind_vars: #{bind_vars.inspect}"
             if prepare_statement
+              #puts "prepared"
               statement = prepared_statement_manager.prepared(statement)
             end
 
@@ -228,7 +230,7 @@ module Cequel
       end
 
       def prepared_statement(cql)
-        @prepared_statement_manager.prepared(cql)
+        prepared_statement_manager.prepared(cql)
       end
 
       #

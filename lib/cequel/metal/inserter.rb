@@ -21,10 +21,21 @@ module Cequel
       #
       def execute(options = {})
         statement = Statement.new
+        ttl = options.fetch(:ttl, nil)
+        timestamp = options.fetch(:timestamp, nil)
         options = options.merge(consistency: data_set.query_consistency, prepared_statement: data_set.prepared_statement)
         write_to_statement(statement, options)
+
+        bind_vars = statement.bind_vars
+        if ttl
+          bind_vars = bind_vars.unshift(ttl)
+        end
+        if timestamp
+          bind_vars = bind_vars.unshift((timestamp.to_f * 1_000_000).to_i)
+        end
+
         data_set.write_with_consistency(
-          statement.cql, statement.bind_vars, data_set.query_consistency)
+          statement.cql, bind_vars, data_set.query_consistency)
       end
 
       #
@@ -52,6 +63,7 @@ module Cequel
             prepare_upsert_value(value) do |statement, *values|
               statements << statement
               bind_vars.concat(values)
+              #puts "prepare_upsert_value: yeild: #{values} #{statements} #{column_names}"
             end
           end
         end

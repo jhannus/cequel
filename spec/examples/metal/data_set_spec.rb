@@ -114,7 +114,7 @@ describe Cequel::Metal::DataSet do
       time = Time.now - 10.minutes
 
       cequel[:posts].where(row_keys).
-        update({title: 'Fun times', body: 'Fun'}, ttl: 600, timestamp: time)
+        update({title: 'jhannus Fun times', body: 'Fun'}, ttl: 600, timestamp: time)
 
       row = cequel[:posts].
         select_ttl(:title).select_writetime(:title).

@@ -31,6 +31,7 @@ module Cequel
 
         response = nil
         begin
+          statement = statement.cql if !statement.is_a?(String)
           time = Benchmark.ms { response = yield }
           generate_message = lambda do
             format_for_log(label, "#{time.round.to_i}ms", statement, bind_vars)

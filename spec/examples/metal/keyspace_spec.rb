@@ -4,7 +4,7 @@ require_relative '../spec_helper'
 describe Cequel::Metal::Keyspace do
   before :all do
     cequel.schema.create_table(:posts) do
-      key :id, :int
+      key :id, :bigint
       column :title, :text
       column :body, :text
     end
@@ -46,7 +46,7 @@ describe Cequel::Metal::Keyspace do
     end
 
     it 'should execute unlogged batch if specified' do
-      expect_query_with_consistency(/BEGIN UNLOGGED BATCH/, anything) do
+      expect_query_with_consistency(instance_of(Cassandra::Statements::Batch::Logged), anything) do
         cequel.batch(unlogged: true) do
           cequel[:posts].insert(id: 1, title: 'One')
           cequel[:posts].insert(id: 2, title: 'Two')
@@ -55,7 +55,7 @@ describe Cequel::Metal::Keyspace do
     end
 
     it 'should execute batch with given consistency' do
-      expect_query_with_consistency(/BEGIN BATCH/, :one) do
+      expect_query_with_consistency(instance_of(Cassandra::Statements::Batch::Logged), :one) do
         cequel.batch(consistency: :one) do
           cequel[:posts].insert(id: 1, title: 'One')
           cequel[:posts].insert(id: 2, title: 'Two')
@@ -116,7 +116,7 @@ describe Cequel::Metal::Keyspace do
     context "with a connection error" do
       it "reconnects to cassandra with a new client after first failed connection" do
         allow(cequel.client).to receive(:execute)
-          .with(statement, :consistency => cequel.default_consistency)
+          .with(statement, hash_including(:consistency => cequel.default_consistency))
           .and_raise(Ione::Io::ConnectionError)
           .once
 
