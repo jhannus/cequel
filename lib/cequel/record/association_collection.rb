@@ -27,7 +27,7 @@ module Cequel
       #
       def find(*keys)
         if block_given? then super
-        else record_set.find(*keys)
+        else record_set.prepared.find(*keys)
         end
       end
 
@@ -36,7 +36,7 @@ module Cequel
       #
       def select(*columns)
         if block_given? then super
-        else record_set.select(*columns)
+        else record_set.prepared.select(*columns)
         end
       end
 
@@ -45,7 +45,7 @@ module Cequel
       #
       def first(*args)
         if loaded? then super
-        else record_set.first(*args)
+        else record_set.prepared.first(*args)
         end
       end
 
@@ -99,7 +99,7 @@ module Cequel
       alias_method :record_set, :__getobj__
 
       def target
-        @target ||= record_set.entries
+        @target ||= record_set.prepared.entries
       end
     end
   end

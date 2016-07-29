@@ -224,14 +224,14 @@ module Cequel
 
       def execute_batch_with_options(statements, options={})
         options[:consistency] ||= default_consistency
-        logged = options.fetch(:logged, true)
+        unlogged = options.fetch(:unlogged, true)
         prepared = options.fetch(:prepared, false)
         retries = max_retries
 
-        batch_log_messge = generate_batch_for_log(statements, logged)
+        batch_log_messge = generate_batch_for_log(statements, unlogged)
         log("CQL#{' (Prepared)' if prepared}", batch_log_messge.cql, *batch_log_messge.bind_vars) do
           begin
-            batch = logged ? client.batch : client.unlogged_batch
+            batch = unlogged ? client.unlogged_batch : client.batch
             statements.each do |s|
               stmt = prepared ? prepared_statement(s.cql) : s.cql
               batch.add(stmt, s.bind_vars)
@@ -350,8 +350,8 @@ module Cequel
         @prepared_statement_manager ||= PreparedStatementManager.new(self)
       end
 
-      def generate_batch_for_log(statements, logged)
-        batch_stmt = Statement.new("BEGIN #{'UNLOGGED ' if !logged}BATCH\n")
+      def generate_batch_for_log(statements, unlogged=false)
+        batch_stmt = Statement.new("BEGIN #{'UNLOGGED ' if unlogged}BATCH\n")
         statements.each { |stmt| batch_stmt.append(stmt.cql+"\n", *stmt.bind_vars) }
         batch_stmt.append("END BATCH")
       end

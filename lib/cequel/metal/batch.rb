@@ -55,7 +55,7 @@ module Cequel
         return if @statements.size.zero?
         options = { consistency: @consistency, prepared: @prepared }
         if @statements.size > 1
-          @keyspace.execute_batch_with_options(@statements, options.merge(logged: logged?))
+          @keyspace.execute_batch_with_options(@statements, options.merge(unlogged: unlogged?))
         else
           statement = @statements.first
           @keyspace.execute_with_options(statement.cql, statement.bind_vars, options)
