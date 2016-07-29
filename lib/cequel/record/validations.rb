@@ -76,9 +76,9 @@ module Cequel
       # @param (see Persistence#update_attributes)
       # @return (see #save!)
       # @raise (see #save!)
-      def update_attributes!(attributes)
+      def update_attributes!(attributes, options={})
         self.attributes = attributes
-        save!
+        save! options
       end
 
       private

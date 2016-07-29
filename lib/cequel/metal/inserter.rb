@@ -23,7 +23,7 @@ module Cequel
         statement = Statement.new
         ttl = options.fetch(:ttl, nil)
         timestamp = options.fetch(:timestamp, nil)
-        options = options.merge(consistency: data_set.query_consistency, prepared_statement: data_set.prepared_statement)
+        options = options.merge(consistency: data_set.query_consistency, prepared: data_set.prepared_statement)
         write_to_statement(statement, options)
 
         bind_vars = statement.bind_vars
@@ -34,8 +34,7 @@ module Cequel
           bind_vars = bind_vars.unshift((timestamp.to_f * 1_000_000).to_i)
         end
 
-        data_set.write_with_consistency(
-          statement.cql, bind_vars, data_set.query_consistency)
+        data_set.write_with_options(statement.cql, bind_vars, options)
       end
 
       #
@@ -56,23 +55,27 @@ module Cequel
         row.keys
       end
 
+      def write_column_names
+        @write_column_names ||= []
+      end
+
       def statements
         [].tap do |statements|
           row.each_pair do |column_name, value|
-            column_names << column_name
             prepare_upsert_value(value) do |statement, *values|
               statements << statement
+              write_column_names << column_name
               bind_vars.concat(values)
-              #puts "prepare_upsert_value: yeild: #{values} #{statements} #{column_names}"
             end
           end
         end
       end
 
       def write_to_statement(statement, options)
+        place_holders = statements.join(', ')
         statement.append("INSERT INTO #{table_name}")
         statement.append(
-          " (#{column_names.join(', ')}) VALUES (#{statements.join(', ')}) ",
+          " (#{write_column_names.join(', ')}) VALUES (#{place_holders}) ",
           *bind_vars)
         statement.append(generate_upsert_options(options))
       end

@@ -53,6 +53,7 @@ module Cequel
       attr_reader :prepared_statement
 
       def_delegator :keyspace, :write_with_consistency
+      def_delegator :keyspace, :write_with_options
 
       #
       # @param table_name [Symbol] column family for this data set
@@ -84,7 +85,7 @@ module Cequel
       #   CQL documentation for INSERT
       #
       def insert(data, options = {})
-        inserter { insert(data) }.execute(options.merge(prepared_statement: prepared_statement))
+        inserter { insert(data) }.execute(options.merge(prepared: prepared_statement))
       end
 
       #
@@ -692,7 +693,7 @@ module Cequel
           consistency: query_consistency,
           page_size: query_page_size,
           paging_state: query_paging_state,
-          prepared_statement: prepared_statement
+          prepared: prepared_statement
         })
       end
 

@@ -25,10 +25,11 @@ module Cequel
       # @see Keyspace#batch
       #
       def initialize(keyspace, options = {})
-        options.assert_valid_keys(:auto_apply, :unlogged, :consistency)
+        options.assert_valid_keys(:auto_apply, :unlogged, :consistency, :prepared)
         @keyspace = keyspace
         @auto_apply = options[:auto_apply]
         @unlogged = options.fetch(:unlogged, false)
+        @prepared = options.fetch(:prepared, false)
         @consistency = options.fetch(:consistency,
                                      keyspace.default_consistency)
         reset
@@ -39,7 +40,7 @@ module Cequel
       #
       # @param (see Keyspace#execute)
       #
-      def execute(cql, *bind_vars)
+      def execute(cql, bind_vars)
         @statements << Statement.new(cql, bind_vars)
         if @auto_apply && @statements.size >= @auto_apply
           apply
@@ -52,18 +53,12 @@ module Cequel
       #
       def apply
         return if @statements.size.zero?
-
+        options = { consistency: @consistency, prepared: @prepared }
         if @statements.size > 1
-          batch = @keyspace.client.batch
-          @statements.each do |s|
-            stmt = @keyspace.prepared_statement(s.cql)
-            batch.add(stmt, s.bind_vars)
-          end
-          @keyspace.client.execute(batch, consistency: @consistency)
+          @keyspace.execute_batch_with_options(@statements, options.merge(logged: logged?))
         else
-          query = @statements.first
-          @keyspace.execute_with_options(
-            query.cql, query.bind_vars, consistency: @consistency, prepapred: true)
+          statement = @statements.first
+          @keyspace.execute_with_options(statement.cql, statement.bind_vars, options)
         end
 
         execute_on_complete_hooks
@@ -98,7 +93,19 @@ module Cequel
                 "#{query_consistency.to_s.upcase} in batch with consistency " \
                 "#{@consistency.upcase}"
         end
-        execute(cql, *bind_vars)
+        execute(cql, bind_vars)
+      end
+
+      # @private
+      def execute_with_options(cql, bind_vars, options)
+        query_consistency = options.fetch(:consistency, nil)
+        if query_consistency && query_consistency != @consistency
+          raise ArgumentError,
+            "Attempting to perform query with consistency " \
+                "#{query_consistency.to_s.upcase} in batch with consistency " \
+                "#{@consistency.upcase}"
+        end
+        execute(cql, bind_vars)
       end
 
       private

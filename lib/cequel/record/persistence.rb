@@ -202,9 +202,9 @@ module Cequel
       # @see Properties#attributes=
       # @see Validations#update_attributes!
       #
-      def update_attributes(attributes)
+      def update_attributes(attributes, options={})
         self.attributes = attributes
-        save
+        save options
       end
 
       #
@@ -274,7 +274,7 @@ module Cequel
 
       def create(options = {})
         assert_keys_present!
-        metal_scope.prepared
+        metal_scope.prepared(options.fetch(:prepared, false))
           .insert(attributes.reject { |attr, value| value.nil? }, options)
         loaded!
         persisted!

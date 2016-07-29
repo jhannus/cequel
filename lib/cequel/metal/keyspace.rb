@@ -58,6 +58,18 @@ module Cequel
       def_delegator :write_target, :execute_with_consistency,
                     :write_with_consistency
 
+      # @!method write_with_options(statement, bind_vars, options)
+      #
+      #   Write data to this keyspace using a CQL query at the given
+      #   consistency. Will be included the current batch operation if one is
+      #   present.
+      #
+      #   @param (see #execute_with_consistency)
+      #   @return [void]
+      #
+      def_delegator :write_target, :execute_with_options,
+        :write_with_options
+
       #
       # @!method batch
       #   (see Cequel::Metal::BatchManager#batch)
@@ -192,20 +204,41 @@ module Cequel
 
       def execute_with_options(statement, bind_vars, options={})
         options[:consistency] ||= default_consistency
-        prepare_statement = options.fetch(:prepared_statement, false)
+        prepared = options.fetch(:prepared, false)
         retries = max_retries
 
-        log('CQL', statement, *bind_vars) do
+        log("CQL#{' (Prepared)' if prepared}", statement, *bind_vars) do
           begin
-            #puts "#{"prepared: " if prepare_statement}#{statement}\n\tbind_vars: #{bind_vars.inspect}"
-            if prepare_statement
-              #puts "prepared"
-              statement = prepared_statement_manager.prepared(statement)
-            end
-
+            statement = prepared_statement(statement) if prepared
             client.execute(statement, options.merge(arguments: bind_vars))
           rescue Cassandra::Errors::NoHostsAvailable,
                  Ione::Io::ConnectionError => e
+            clear_active_connections!
+            raise if retries == 0
+            retries -= 1
+            sleep(retry_delay)
+            retry
+          end
+        end
+      end
+
+      def execute_batch_with_options(statements, options={})
+        options[:consistency] ||= default_consistency
+        logged = options.fetch(:logged, true)
+        prepared = options.fetch(:prepared, false)
+        retries = max_retries
+
+        batch_log_messge = generate_batch_for_log(statements, logged)
+        log("CQL#{' (Prepared)' if prepared}", batch_log_messge.cql, *batch_log_messge.bind_vars) do
+          begin
+            batch = logged ? client.batch : client.unlogged_batch
+            statements.each do |s|
+              stmt = prepared ? prepared_statement(s.cql) : s.cql
+              batch.add(stmt, s.bind_vars)
+            end
+            client.execute(batch, consistency: options[:consistency])
+          rescue Cassandra::Errors::NoHostsAvailable,
+              Ione::Io::ConnectionError => e
             clear_active_connections!
             raise if retries == 0
             retries -= 1
@@ -315,6 +348,12 @@ module Cequel
 
       def prepared_statement_manager
         @prepared_statement_manager ||= PreparedStatementManager.new(self)
+      end
+
+      def generate_batch_for_log(statements, logged)
+        batch_stmt = Statement.new("BEGIN #{'UNLOGGED ' if !logged}BATCH\n")
+        statements.each { |stmt| batch_stmt.append(stmt.cql+"\n", *stmt.bind_vars) }
+        batch_stmt.append("END BATCH")
       end
 
       def write_target

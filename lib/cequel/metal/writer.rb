@@ -35,11 +35,12 @@ module Cequel
       # @return [void]
       #
       def execute(options = {})
-        options.assert_valid_keys(:timestamp, :ttl, :consistency)
+        options.assert_valid_keys(:timestamp, :ttl, :consistency, :prepared)
         return if empty?
         statement = Statement.new
         ttl = options.fetch(:ttl, nil)
         timestamp = options.fetch(:timestamp, nil)
+        prepared = options.fetch(:prepared, false)
         consistency = options.fetch(:consistency, data_set.query_consistency)
         write_to_statement(statement, options)
         statement.append(*data_set.row_specifications_cql)
@@ -52,8 +53,8 @@ module Cequel
           bind_vars = bind_vars.unshift((timestamp.to_f * 1_000_000).to_i)
         end
 
-        data_set.write_with_consistency(
-          statement.cql, bind_vars, consistency)
+        data_set.write_with_options(
+          statement.cql, bind_vars, consistency: consistency, prepared: prepared)
       end
 
       private
@@ -65,11 +66,11 @@ module Cequel
       def prepare_upsert_value(value)
         case value
         when ::Array
-          yield '?', value
+          yield '?', value if value.length > 0
         when ::Set then
-          yield '?', value
+          yield '?', value if value.size > 0
         when ::Hash then
-          yield '?', value
+          yield '?', value if value.size > 0
         else
           yield '?', value
         end
