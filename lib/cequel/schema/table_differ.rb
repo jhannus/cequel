@@ -11,7 +11,7 @@ module Cequel
     # be raised if unsupported changes are detected.
     #
     class TableDiffer
-      protected def initialize(table_a, table_b)
+      def initialize(table_a, table_b)
         @table_a = table_a
         @table_b = table_b
       end

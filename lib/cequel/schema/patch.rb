@@ -8,7 +8,7 @@ module Cequel
     class Patch
       extend Forwardable
 
-      protected def initialize(changes)
+      def initialize(changes)
         @changes = changes
       end
 
@@ -21,7 +21,7 @@ module Cequel
       end
 
       class AbstractChange
-        protected def initialize(table, *post_init_args)
+        def initialize(table, *post_init_args)
           @table = table
 
           post_init(*post_init_args)
@@ -55,7 +55,7 @@ module Cequel
       end
 
       class SetTableProperties < AbstractChange
-        protected def post_init()
+        def post_init()
         end
 
         def to_cql
@@ -74,7 +74,7 @@ module Cequel
       end
 
       class DropIndex < AbstractChange
-        protected def post_init(column_with_obsolete_idx)
+        def post_init(column_with_obsolete_idx)
           @index_name = column_with_obsolete_idx.index_name
         end
 
@@ -92,7 +92,7 @@ module Cequel
       end
 
       class AddIndex < AbstractChange
-        protected def post_init(column)
+        def post_init(column)
           @column = column
           @index_name = column.index_name
         end
@@ -112,7 +112,7 @@ module Cequel
       end
 
       class AddColumn < AbstractChange
-        protected def post_init(column)
+        def post_init(column)
           @column = column
         end
 
@@ -130,7 +130,7 @@ module Cequel
       end
 
       class RenameColumn < AbstractChange
-        protected def post_init(old_column, new_column)
+        def post_init(old_column, new_column)
           @old_name, @new_name = old_column.name, new_column.name
         end
 

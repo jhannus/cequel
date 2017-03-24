@@ -29,7 +29,7 @@ module Cequel
       # Initialize a new instance
       #
       # table_name - The name of the table being described.
-      protected def initialize(table_name)
+      def initialize(table_name)
         @table_name = table_name
         @columns = []
         @properties = []

@@ -37,17 +37,16 @@ module Cequel
 
         define_method(:"__data_for_#{method_name}_instrumentation", &data_proc)
 
-        mod = Module.new
-        mod.module_eval <<-METH
-          def #{method_name}(*args)
+        module_eval <<-METH
+          def #{method_name}_with_instrumentation(*args)
             instrument("#{topic}",
                        __data_for_#{method_name}_instrumentation(self)) do
-              super(*args)
+              #{method_name}_without_instrumentation(*args)
             end
           end
         METH
 
-        prepend mod
+        alias_method_chain method_name, "instrumentation"
       end
     end
 

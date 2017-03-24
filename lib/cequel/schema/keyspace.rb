@@ -194,7 +194,7 @@ module Cequel
       # @param exists [Boolean] if set to true, will drop only if exists (Cassandra 3.x)
       # @return [void]
       #
-      def drop_table(name, exists: false)
+      def drop_table(name, exists=false)
         keyspace.execute("DROP TABLE #{'IF EXISTS ' if exists}#{name}")
       end
 
@@ -205,7 +205,7 @@ module Cequel
       # @param exists [Boolean] if set to true, will drop only if exists (Cassandra 3.x)
       # @return [void]
       #
-      def drop_materialized_view(name, exists: false)
+      def drop_materialized_view(name, exists=false)
         keyspace.execute("DROP MATERIALIZED VIEW #{'IF EXISTS ' if exists}#{name}")
       end
 

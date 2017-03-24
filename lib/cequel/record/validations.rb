@@ -26,7 +26,7 @@ module Cequel
       included do
         include ActiveModel::Validations
         define_model_callbacks :validation
-        prepend Callback
+        include Callback
       end
 
       #
